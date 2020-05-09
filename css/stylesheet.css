@@ -1,0 +1,15 @@
+body {
+    margin: 0;
+}
+
+canvas {
+    display: block;
+    margin: auto;
+}
+
+.control-svg {
+    font-size: 2em;
+    display: inline-block;
+    height: 1em;
+    color: #212529;
+}

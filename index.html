@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>handy andy</title>
+    <link rel="stylesheet" href="css/skeleton/2.0.4/normalize.css">
+    <link rel="stylesheet" href="css/skeleton/2.0.4/skeleton.css">
+    <link rel="stylesheet" href="css/stylesheet.css">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div class="container">
+    <div id="controls">
+        <div class="row">
+            <div class="one columns">&nbsp;</div>
+            <div class="four columns">Controls</div>
+        </div>
+        <div class="row">
+            <div class="one columns">&nbsp;</div>
+            <div class="two columns">Strut Left</div>
+            <div class="one columns">
+                <svg focusable="false" data-prefix="far" data-icon="arrow-alt-circle-left" class="control-svg"
+                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                    <path fill="currentColor"
+                          d="M8 256c0 137 111 248 248 248s248-111 248-248S393 8 256 8 8 119 8 256zm448 0c0 110.5-89.5 200-200 200S56 366.5 56 256 145.5 56 256 56s200 89.5 200 200zm-72-20v40c0 6.6-5.4 12-12 12H256v67c0 10.7-12.9 16-20.5 8.5l-99-99c-4.7-4.7-4.7-12.3 0-17l99-99c7.6-7.6 20.5-2.2 20.5 8.5v67h116c6.6 0 12 5.4 12 12z"
+                          class=""></path>
+                </svg>
+            </div>
+            <div class="two columns">Dainty Leap</div>
+            <div class="one columns">
+                <svg focusable="false" data-prefix="far" data-icon="arrow-alt-circle-up" class="control-svg"
+                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                    <path fill="currentColor"
+                          d="M256 504c137 0 248-111 248-248S393 8 256 8 8 119 8 256s111 248 248 248zm0-448c110.5 0 200 89.5 200 200s-89.5 200-200 200S56 366.5 56 256 145.5 56 256 56zm20 328h-40c-6.6 0-12-5.4-12-12V256h-67c-10.7 0-16-12.9-8.5-20.5l99-99c4.7-4.7 12.3-4.7 17 0l99 99c7.6 7.6 2.2 20.5-8.5 20.5h-67v116c0 6.6-5.4 12-12 12z"
+                          class=""></path>
+                </svg>
+            </div>
+            <div class="two columns">Prance Right</div>
+            <div class="one columns">
+                <svg focusable="false" data-prefix="far" data-icon="arrow-alt-circle-right" class="control-svg"
+                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                    <path fill="currentColor"
+                          d="M504 256C504 119 393 8 256 8S8 119 8 256s111 248 248 248 248-111 248-248zm-448 0c0-110.5 89.5-200 200-200s200 89.5 200 200-89.5 200-200 200S56 366.5 56 256zm72 20v-40c0-6.6 5.4-12 12-12h116v-67c0-10.7 12.9-16 20.5-8.5l99 99c4.7 4.7 4.7 12.3 0 17l-99 99c-7.6 7.6-20.5 2.2-20.5-8.5v-67H140c-6.6 0-12-5.4-12-12z"
+                          class=""></path>
+                </svg>
+            </div>
+        </div>
+        <div class="row">
+            <div class="one columns">&nbsp;</div>
+            <div class="eleven columns">Eat chicken! Watch out for tomatoes! Visiting the London Cocktail Club has consequences!</div>
+        </div>
+    </div>
+<!--    <div>-->
+<!--        <canvas id="handyAndyCanvas"></canvas>-->
+<!--    </div>-->
+</div>
+<script type="application/javascript" src="js/phaser/3.23.0/phaser.js"></script>
+<script type="application/javascript">
+    let config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        // canvas: "handyAndyCanvas",
+        physics: {
+            default: "arcade",
+            arcade: {
+                gravity: {y: 300},
+                debug: false
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    let game = new Phaser.Game(config);
+
+    let platforms;
+    let platformLookup = [];
+    let handyAndy;
+    let chickenBuckets;
+    let tomatoes;
+    let timedEvent;
+    let lcc;
+    let lccVisited = false;
+    let score = 0;
+    let scoreText;
+    let gameOverText;
+    let chickenPower = 0;
+    let chickenPowerImage;
+    let cursors;
+
+    const MIN_BUCKETS = 1;
+    const MAX_BUCKETS = 8;
+
+
+    function preload() {
+        this.load.image("sky", "assets/sky.png");
+        this.load.image("ground-platform", "assets/ground-platform.png");  // 802 x 72
+        this.load.image("floating-platform", "assets/floating-platform.png");  // 400 x 32
+        this.load.image("chicken-bucket", "assets/chicken-bucket.png");
+        this.load.image("tomato", "assets/tomato.png");
+        this.load.image("lcc", "assets/lcc.png");
+        this.load.spritesheet("handy-andy", "assets/handy-andy-with-lcc-final.png", {frameWidth: 48, frameHeight: 74});
+
+        this.load.image("chicken-power", "assets/chicken-power.png");
+    }
+
+    function create() {
+        // Background
+        this.add.image(400, 300, "sky");
+
+        // Platforms
+        platforms = this.physics.add.staticGroup();
+        platforms.create(400, 568, "ground-platform");
+        platforms.create(600, 400, "floating-platform");
+        platforms.create(50, 250, "floating-platform");
+        platforms.create(750, 220, "floating-platform");
+
+        // Associated platform lookup entries
+        platformLookup.push({leftX: 400, rightX: 800, y: 568})
+        platformLookup.push({leftX: 600, rightX: 800, y: 400})
+        platformLookup.push({leftX: 50, rightX: 450, y: 250})
+        platformLookup.push({leftX: 750, rightX: 800, y: 220})
+
+
+        // Player
+        handyAndy = this.physics.add.sprite(100, 450, "handy-andy");
+        handyAndy.setBounce(0.2);
+        handyAndy.setCollideWorldBounds(true);
+        this.physics.add.collider(handyAndy, platforms);
+
+        // Player animation
+        this.anims.create({
+            key: "left",
+            frames: this.anims.generateFrameNumbers("handy-andy", {start: 0, end: 3}),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: "turn",
+            frames: [{key: "handy-andy", frame: 4}],
+            frameRate: 20
+        });
+
+        this.anims.create({
+            key: "right",
+            frames: this.anims.generateFrameNumbers("handy-andy", {start: 5, end: 8}),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: "lcc-left",
+            frames: this.anims.generateFrameNumbers("handy-andy", {start: 9, end: 12}),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: "lcc-turn",
+            frames: [{key: "handy-andy", frame: 13}],
+            frameRate: 20
+        });
+
+        this.anims.create({
+            key: "lcc-right",
+            frames: this.anims.generateFrameNumbers("handy-andy", {start: 14, end: 17}),
+            frameRate: 10,
+            repeat: -1
+        });
+
+
+        // LCC
+        lcc = this.physics.add.sprite(-1000, -1000, "lcc");
+        this.physics.add.collider(lcc, platforms);
+        this.physics.add.overlap(handyAndy, lcc, visitLCC, null, this);
+        lcc.disableBody(true, true);
+
+        timedEvent = this.time.addEvent({delay: 2000, callback: onLccEvent, callbackScope: this, loop: true});
+
+
+        // Chicken buckets
+        chickenBuckets = this.physics.add.group();
+        let randomNumberOfChickenBuckets = getRandomInt(MIN_BUCKETS, MAX_BUCKETS);
+
+        for (i = 0; i < randomNumberOfChickenBuckets; i++) {
+            let chickenBucket = chickenBuckets.create(getRandomInt(0, 800), 0, "chicken-bucket");
+            chickenBucket.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+        }
+
+        this.physics.add.collider(chickenBuckets, platforms);
+        this.physics.add.overlap(handyAndy, chickenBuckets, collectChickenBucket, null, this);
+
+
+        // Tomatoes
+        tomatoes = this.physics.add.group();
+        this.physics.add.collider(handyAndy, tomatoes, hitTomato, null, this);
+        this.physics.add.collider(tomatoes, platforms);
+
+
+        // Chicken power
+        chickenPowerImage = this.add.image(800 - 24, 600 - 32, "chicken-power");
+        chickenPowerImage.visible = false;
+
+
+        // Score
+        scoreText = this.add.text(16, 16, "score: 0", {fontSize: "32px", fill: "#000"});
+
+
+        // Control keys set to arrow keys
+        cursors = this.input.keyboard.createCursorKeys();
+    }
+
+    function update() {
+        const HORIZONTAL_VELOCITY = 160;
+        const VERTICAL_VELOCITY = -330;
+        const LCC_FACTOR = 2;
+
+        // Player control
+        if (cursors.left.isDown) {
+            if (lccVisited) {
+                handyAndy.setVelocityX(-1 * (HORIZONTAL_VELOCITY / LCC_FACTOR));
+                handyAndy.anims.play("lcc-left", true);
+            } else {
+                handyAndy.setVelocityX(-1 * HORIZONTAL_VELOCITY);
+                handyAndy.anims.play("left", true);
+            }
+        } else if (cursors.right.isDown) {
+            if (lccVisited) {
+                handyAndy.setVelocityX(HORIZONTAL_VELOCITY / LCC_FACTOR);
+                handyAndy.anims.play("lcc-right", true);
+            } else {
+                handyAndy.setVelocityX(HORIZONTAL_VELOCITY);
+                handyAndy.anims.play("right", true);
+            }
+        } else {
+            if (lccVisited) {
+                handyAndy.setVelocityX(0);
+                handyAndy.anims.play("lcc-turn");
+            } else {
+                handyAndy.setVelocityX(0);
+                handyAndy.anims.play("turn");
+            }
+        }
+
+        if (cursors.up.isDown && handyAndy.body.touching.down) {
+            if (lccVisited) {
+                handyAndy.setVelocityY((VERTICAL_VELOCITY / 2) - 200);
+            } else {
+                handyAndy.setVelocityY(VERTICAL_VELOCITY);
+            }
+        }
+    }
+
+    function collectChickenBucket(player, chickenBucket) {
+        chickenBucket.disableBody(true, true);
+
+        // Update the score
+        score += 10;
+        scoreText.setText("Score: " + score);
+
+        // Track chicken power
+        chickenPower++;
+
+        if (!lccVisited && chickenPower > 0) {
+            chickenPowerImage.visible = true;
+        }
+
+        if (chickenBuckets.countActive(true) === 0) {
+            // Clear LCC and effect if present
+            lcc.disableBody(true, true);
+            lccVisited = false;
+
+            if (chickenPower > 0) {
+                chickenPowerImage.visible = true;
+            }
+
+            //  A new batch of chicken buckets to collect
+            chickenBuckets = this.physics.add.group();
+            let randomNumberOfChickenBuckets = getRandomInt(MIN_BUCKETS, MAX_BUCKETS);
+
+            for (i = 0; i < randomNumberOfChickenBuckets; i++) {
+                let chickenBucket = chickenBuckets.create(getRandomInt(30, 750), 0, "chicken-bucket");
+                chickenBucket.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+            }
+
+            this.physics.add.collider(chickenBuckets, platforms);
+            this.physics.add.overlap(handyAndy, chickenBuckets, collectChickenBucket, null, this);
+
+
+            let x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
+
+            let tomato = tomatoes.create(x, 16, "tomato");
+            tomato.setBounce(1);
+            tomato.setCollideWorldBounds(true);
+            tomato.setVelocity(Phaser.Math.Between(-200, 200), 20);
+            tomato.allowGravity = false;
+        }
+    }
+
+    function visitLCC(player, lcc) {
+        lcc.disableBody(true, true);
+        lccVisited = true;
+        chickenPower = 0;
+        chickenPowerImage.visible = false;
+    }
+
+    function onLccEvent() {
+        // Random chance of an LCC visit
+        if (!lcc.visible && !lccVisited && getRandomInt(1, 100) % 2 === 0) {
+            let selectedPlatformIndex = getRandomInt(1, 100) % 4;
+            let x = getRandomInt(platformLookup[selectedPlatformIndex].leftX, platformLookup[selectedPlatformIndex].rightX);
+
+            lcc.enableBody(true, x, platformLookup[selectedPlatformIndex].y - 154, true, true);
+        }
+    }
+
+    function hitTomato(player, tomato) {
+        this.physics.pause();
+
+        player.setTint(0xff0000);
+        player.anims.play("turn");
+
+        gameOver = true;
+        timedEvent.remove(false);
+
+        gameOverText = this.add.text(800 / 5, 600 / 2, "DEATH BY TOMATO", {
+            font: "bold 50px Arial",
+            fill: "#000",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        });
+        this.add.text(800 / 2, (600 / 3) * 2, "Click to play again", {
+            font: "bold 30px Arial",
+            fill: "#000",
+            boundsAlignH: "center",
+            boundsAlignV: "middle"
+        });
+
+        this.input.on("pointerdown", function (pointer) {
+            // console.log(this.game.loop.frame, "down B");
+            this.registry.destroy();
+            this.events.off();﻿
+            this.scene.restart();
+        }, this);
+    }
+
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+</script>
+</body>
+</html>
