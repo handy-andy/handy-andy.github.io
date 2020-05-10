@@ -51,9 +51,6 @@
             <div class="eleven columns">Eat chicken! Watch out for tomatoes! Visiting the London Cocktail Club has consequences!</div>
         </div>
     </div>
-<!--    <div>-->
-<!--        <canvas id="handyAndyCanvas"></canvas>-->
-<!--    </div>-->
 </div>
 <script type="application/javascript" src="js/phaser/3.23.0/phaser.js"></script>
 <script type="application/javascript">
@@ -61,7 +58,6 @@
         type: Phaser.AUTO,
         width: 800,
         height: 600,
-        // canvas: "handyAndyCanvas",
         physics: {
             default: "arcade",
             arcade: {
@@ -88,7 +84,6 @@
     let lccVisited = false;
     let score = 0;
     let scoreText;
-    let gameOverText;
     let chickenPower = 0;
     let chickenPowerImage;
     let cursors;
@@ -128,6 +123,7 @@
 
 
         // Player
+        lccVisited = false;
         handyAndy = this.physics.add.sprite(100, 450, "handy-andy");
         handyAndy.setBounce(0.2);
         handyAndy.setCollideWorldBounds(true);
@@ -311,7 +307,7 @@
     }
 
     function onLccEvent() {
-        // Random chance of an LCC visit
+        // Random chance of an LCC appearing
         if (!lcc.visible && !lccVisited && getRandomInt(1, 100) % 2 === 0) {
             let selectedPlatformIndex = getRandomInt(1, 100) % 4;
             let x = getRandomInt(platformLookup[selectedPlatformIndex].leftX, platformLookup[selectedPlatformIndex].rightX);
@@ -322,19 +318,18 @@
 
     function hitTomato(player, tomato) {
         this.physics.pause();
+        timedEvent.remove(false);
 
         player.setTint(0xff0000);
         player.anims.play("turn");
 
-        gameOver = true;
-        timedEvent.remove(false);
-
-        gameOverText = this.add.text(800 / 5, 600 / 2, "DEATH BY TOMATO", {
+        this.add.text(800 / 5, 600 / 2, "DEATH BY TOMATO", {
             font: "bold 50px Arial",
             fill: "#000",
             boundsAlignH: "center",
             boundsAlignV: "middle"
         });
+
         this.add.text(800 / 2, (600 / 3) * 2, "Click to play again", {
             font: "bold 30px Arial",
             fill: "#000",
@@ -343,10 +338,10 @@
         });
 
         this.input.on("pointerdown", function (pointer) {
-            // console.log(this.game.loop.frame, "down B");
             this.registry.destroy();
             this.events.off();﻿
             this.scene.restart();
+            lccVisited = false;
         }, this);
     }
 
